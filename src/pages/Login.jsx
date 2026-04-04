@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Zap } from 'lucide-react'
 import insforge from '../lib/insforge'
@@ -20,19 +19,6 @@ const GithubIcon = () => (
 )
 
 export default function Login() {
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const result = await insforge.auth.getCurrentUser()
-        const user = result?.data?.user ?? result?.user ?? null
-        if (user?.id) navigate('/dashboard')
-      } catch { /* not logged in */ }
-    }
-    checkUser()
-  }, [navigate])
-
   const handleOAuth = async (provider) => {
     try {
       await insforge.auth.signInWithOAuth({

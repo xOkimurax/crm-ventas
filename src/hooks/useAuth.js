@@ -1,6 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import insforge from '../lib/insforge'
 
+// Check if there's any stored session before hitting the API
+function hasStoredSession() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && (key.includes('insforge') || key.includes('auth') || key.includes('session') || key.includes('token'))) {
+        return true
+      }
+    }
+  } catch { /* no localStorage */ }
+  return false
+}
+
 export function useAuth() {
   const [user, setUser] = useState(undefined)
   const [loading, setLoading] = useState(true)
@@ -9,6 +22,13 @@ export function useAuth() {
   useEffect(() => {
     if (checked.current) return
     checked.current = true
+
+    // No stored session → skip API call, user is not logged in
+    if (!hasStoredSession()) {
+      setUser(null)
+      setLoading(false)
+      return
+    }
 
     const checkUser = async () => {
       try {
