@@ -32,7 +32,7 @@ export default function App() {
           <Route path="/memoria" element={<ProtectedRoute><Memoria /></ProtectedRoute>} />
           <Route path="/whatsapp" element={<ProtectedRoute><WhatsApp /></ProtectedRoute>} />
           <Route path="/config" element={<ProtectedRoute><Config /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
       <Toaster

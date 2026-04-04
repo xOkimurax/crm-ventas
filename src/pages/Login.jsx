@@ -25,8 +25,9 @@ export default function Login() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const user = await insforge.auth.getCurrentUser()
-        if (user) navigate('/dashboard')
+        const result = await insforge.auth.getCurrentUser()
+        const user = result?.data?.user ?? result?.user ?? null
+        if (user?.id) navigate('/dashboard')
       } catch { /* not logged in */ }
     }
     checkUser()
@@ -46,7 +47,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-2xl mb-4">
             <Zap className="w-8 h-8 text-white" />
@@ -55,7 +55,6 @@ export default function Login() {
           <p className="text-gray-400">Gestiona tus ventas y clientes</p>
         </div>
 
-        {/* Card */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-4">
           <h2 className="text-xl font-semibold text-white text-center mb-6">
             Iniciar sesión
