@@ -14,6 +14,15 @@ function hasStoredSession() {
   return false
 }
 
+// Check if we're landing from an OAuth redirect (insforge_code in URL)
+function hasOAuthCallback() {
+  try {
+    return new URLSearchParams(window.location.search).has('insforge_code')
+  } catch {
+    return false
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState(undefined)
   const [loading, setLoading] = useState(true)
@@ -23,8 +32,8 @@ export function useAuth() {
     if (checked.current) return
     checked.current = true
 
-    // No stored session → skip API call, user is not logged in
-    if (!hasStoredSession()) {
+    // No stored session AND no OAuth callback → skip API call, user is not logged in
+    if (!hasStoredSession() && !hasOAuthCallback()) {
       setUser(null)
       setLoading(false)
       return
@@ -32,6 +41,8 @@ export function useAuth() {
 
     const checkUser = async () => {
       try {
+        // getCurrentUser() internally awaits authCallbackHandled,
+        // so it will wait for the OAuth code exchange to complete if needed
         const result = await insforge.auth.getCurrentUser()
         const currentUser = result?.data?.user ?? result?.user ?? null
         setUser(currentUser?.id ? currentUser : null)
