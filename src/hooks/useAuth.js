@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import insforge from '../lib/insforge'
 
 export function useAuth() {
   const [user, setUser] = useState(undefined)
   const [loading, setLoading] = useState(true)
+  const checked = useRef(false)
 
   useEffect(() => {
+    if (checked.current) return
+    checked.current = true
+
     const checkUser = async () => {
       try {
         const result = await insforge.auth.getCurrentUser()
-        // SDK returns { data: { user }, error } or just user depending on version
-        const currentUser = result?.data?.user ?? result?.user ?? (result && !result.data && !result.error ? result : null)
-        setUser(currentUser || null)
+        const currentUser = result?.data?.user ?? result?.user ?? null
+        setUser(currentUser?.id ? currentUser : null)
       } catch {
         setUser(null)
       } finally {
