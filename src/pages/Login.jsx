@@ -18,175 +18,140 @@ const GithubIcon = () => (
   </svg>
 )
 
-const Spinner = () => (
-  <svg className="animate-spin w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-  </svg>
-)
-
 export default function Login() {
-  const [loadingProvider, setLoadingProvider] = useState(null)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(null)
 
   const handleOAuth = async (provider) => {
-    if (loadingProvider) return
-    setLoadingProvider(provider)
+    if (loading) return
+    setLoading(provider)
     try {
-      const { error } = await insforge.auth.signInWithOAuth({
+      // Get auth URL directly from Insforge API and redirect manually
+      const result = await insforge.auth.signInWithOAuth({
         provider,
         redirectTo: window.location.origin + '/dashboard',
       })
-      if (error) {
-        toast.error('Error al iniciar sesión: ' + (error.message || 'Intenta de nuevo'))
-        setLoadingProvider(null)
+
+      // If SDK didn't redirect automatically (skipBrowserRedirect behavior), do it manually
+      const url = result?.data?.url
+      if (url) {
+        window.location.href = url
+        return
       }
-      // If no error, browser is redirecting — keep loading state
+
+      // SDK handles redirect internally — if we get here without error, it's redirecting
+      if (result?.error) {
+        throw result.error
+      }
     } catch (err) {
-      toast.error('Error al iniciar sesión: ' + (err.message || 'Intenta de nuevo'))
-      setLoadingProvider(null)
+      console.error('OAuth error:', err)
+      toast.error('Error: ' + (err?.message || 'No se pudo conectar con ' + provider))
+      setLoading(null)
     }
   }
 
-  const handleEmailLogin = (e) => {
-    e.preventDefault()
-    toast('Email/password próximamente disponible', { icon: '🔒' })
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg, #0a0a0f 0%, #0f0a1e 40%, #0a0f1e 100%)',
-      }}
+    <div
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #0f0a1e 50%, #0a0f1e 100%)' }}
     >
-      {/* Background glow blobs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl"
-          style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full opacity-8 blur-3xl"
-          style={{ background: 'radial-gradient(circle, #2563eb 0%, transparent 70%)' }} />
+      {/* Glow blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/3 left-1/3 w-72 h-72 rounded-full opacity-20 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #7c3aed, transparent 70%)' }} />
+        <div className="absolute bottom-1/3 right-1/3 w-72 h-72 rounded-full opacity-15 blur-3xl"
+          style={{ background: 'radial-gradient(circle, #2563eb, transparent 70%)' }} />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo + Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-5 relative"
+      <div className="w-full max-w-sm relative">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8 gap-4">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{
               background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-              boxShadow: '0 0 40px rgba(124, 58, 237, 0.5), 0 0 80px rgba(124, 58, 237, 0.2)',
+              boxShadow: '0 0 32px rgba(124,58,237,0.6)',
             }}
           >
-            <Zap className="w-10 h-10 text-white" fill="white" />
+            <Zap className="w-8 h-8 text-white" fill="white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">CRM Pro</h1>
-          <p className="text-gray-400 text-base">Gestiona tus ventas y clientes con IA</p>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white">CRM Pro</h1>
+            <p className="text-gray-400 text-sm mt-1">Gestiona tus ventas con IA</p>
+          </div>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-8"
+        <div
+          className="rounded-2xl p-6"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
             backdropFilter: 'blur(20px)',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.4)',
           }}
         >
-          <h2 className="text-xl font-semibold text-white text-center mb-6">Iniciar sesión</h2>
+          <p className="text-center text-sm text-gray-400 mb-5">Iniciá sesión para continuar</p>
 
-          {/* OAuth buttons */}
-          <div className="space-y-3 mb-6">
+          <div className="flex flex-col gap-3">
+            {/* Google */}
             <button
               onClick={() => handleOAuth('google')}
-              disabled={!!loadingProvider}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!!loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl text-sm font-medium transition-all"
               style={{
-                background: 'rgba(255,255,255,0.95)',
-                color: '#1a1a2e',
+                background: loading === 'google' ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.92)',
+                color: '#111',
+                opacity: loading && loading !== 'google' ? 0.5 : 1,
               }}
-              onMouseEnter={e => { if (!loadingProvider) e.currentTarget.style.background = 'rgba(255,255,255,1)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.95)' }}
             >
-              {loadingProvider === 'google' ? <Spinner /> : <GoogleIcon />}
-              {loadingProvider === 'google' ? 'Redirigiendo…' : 'Continuar con Google'}
+              {loading === 'google' ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Redirigiendo...
+                </>
+              ) : (
+                <>
+                  <GoogleIcon />
+                  Continuar con Google
+                </>
+              )}
             </button>
 
+            {/* GitHub */}
             <button
               onClick={() => handleOAuth('github')}
-              disabled={!!loadingProvider}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!!loading}
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl text-sm font-medium transition-all"
               style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.15)',
                 color: '#e5e7eb',
+                opacity: loading && loading !== 'github' ? 0.5 : 1,
               }}
-              onMouseEnter={e => { if (!loadingProvider) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
             >
-              {loadingProvider === 'github' ? <Spinner /> : <GithubIcon />}
-              {loadingProvider === 'github' ? 'Redirigiendo…' : 'Continuar con GitHub'}
+              {loading === 'github' ? (
+                <>
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Redirigiendo...
+                </>
+              ) : (
+                <>
+                  <GithubIcon />
+                  Continuar con GitHub
+                </>
+              )}
             </button>
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-            <span className="text-xs text-gray-500 uppercase tracking-widest">o</span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          </div>
-
-          {/* Email / Password form */}
-          <form onSubmit={handleEmailLogin} className="space-y-3">
-            <input
-              type="email"
-              placeholder="tu@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-500 outline-none transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-              onFocus={e => { e.currentTarget.style.border = '1px solid rgba(124,58,237,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.15)' }}
-              onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
-            />
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder-gray-500 outline-none transition-all"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-              onFocus={e => { e.currentTarget.style.border = '1px solid rgba(124,58,237,0.6)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.15)' }}
-              onBlur={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.1)'; e.currentTarget.style.boxShadow = 'none' }}
-            />
-            <button
-              type="submit"
-              disabled={!!loadingProvider}
-              className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-                boxShadow: '0 4px 15px rgba(124,58,237,0.3)',
-              }}
-              onMouseEnter={e => { if (!loadingProvider) e.currentTarget.style.boxShadow = '0 4px 25px rgba(124,58,237,0.5)' }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 15px rgba(124,58,237,0.3)' }}
-            >
-              Iniciar sesión
-            </button>
-          </form>
-
-          <p className="text-center text-xs text-gray-600 mt-6">
-            Al continuar aceptas nuestros{' '}
-            <span className="text-gray-500 cursor-pointer hover:text-gray-400 transition-colors">términos de uso</span>
+          <p className="text-center text-xs text-gray-600 mt-5">
+            Al continuar aceptás los términos de uso
           </p>
         </div>
-
-        <p className="text-center text-xs text-gray-700 mt-6">
-          CRM Pro &copy; {new Date().getFullYear()}
-        </p>
       </div>
     </div>
   )
