@@ -1,28 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import insforge from '../lib/insforge'
 
-// Check if there's any stored session before hitting the API
-function hasStoredSession() {
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && (key.includes('insforge') || key.includes('auth') || key.includes('session') || key.includes('token'))) {
-        return true
-      }
-    }
-  } catch { /* no localStorage */ }
-  return false
-}
-
-// Check if we're landing from an OAuth redirect (insforge_code in URL)
-function hasOAuthCallback() {
-  try {
-    return new URLSearchParams(window.location.search).has('insforge_code')
-  } catch {
-    return false
-  }
-}
-
 export function useAuth() {
   const [user, setUser] = useState(undefined)
   const [loading, setLoading] = useState(true)
@@ -32,17 +10,13 @@ export function useAuth() {
     if (checked.current) return
     checked.current = true
 
-    // No stored session AND no OAuth callback → skip API call, user is not logged in
-    if (!hasStoredSession() && !hasOAuthCallback()) {
-      setUser(null)
-      setLoading(false)
-      return
-    }
-
-    const checkUser = async () => {
+    const init = async () => {
       try {
-        // getCurrentUser() internally awaits authCallbackHandled,
-        // so it will wait for the OAuth code exchange to complete if needed
+        // Always wait for the SDK auth callback to complete first.
+        // This handles the OAuth redirect case where insforge_code is in the URL.
+        // The SDK processes it automatically in detectAuthCallback() on init.
+        await insforge.auth.authCallbackHandled
+
         const result = await insforge.auth.getCurrentUser()
         const currentUser = result?.data?.user ?? result?.user ?? null
         setUser(currentUser?.id ? currentUser : null)
@@ -52,7 +26,7 @@ export function useAuth() {
         setLoading(false)
       }
     }
-    checkUser()
+    init()
   }, [])
 
   const signOut = async () => {
