@@ -29,7 +29,7 @@ function NewSaleModal({ companyId, onClose, queryClient }) {
   const { data: leads } = useQuery({
     queryKey: ['leads-all', companyId],
     queryFn: async () => {
-      const { data } = await insforge.db.from('leads').select('id, name').eq('company_id', companyId)
+      const { data } = await insforge.database.from('leads').select('id, name').eq('company_id', companyId)
       return data || []
     },
   })
@@ -37,7 +37,7 @@ function NewSaleModal({ companyId, onClose, queryClient }) {
   const { data: products } = useQuery({
     queryKey: ['products-all', companyId],
     queryFn: async () => {
-      const { data } = await insforge.db.from('crm_products').select('id, name, price, stock').eq('company_id', companyId).eq('active', true)
+      const { data } = await insforge.database.from('crm_products').select('id, name, price, stock').eq('company_id', companyId).eq('active', true)
       return data || []
     },
   })
@@ -47,7 +47,7 @@ function NewSaleModal({ companyId, onClose, queryClient }) {
       const productId = data.product_id || null
       const leadId = data.lead_id || null
 
-      const { error } = await insforge.db.from('crm_sales').insert({
+      const { error } = await insforge.database.from('crm_sales').insert({
         company_id: companyId,
         lead_id: leadId || null,
         product_name: data.product_name,
@@ -63,17 +63,17 @@ function NewSaleModal({ companyId, onClose, queryClient }) {
         const product = products?.find(p => p.id == productId)
         if (product) {
           const newStock = (product.stock || 0) - 1
-          await insforge.db.from('crm_products').update({ stock: newStock }).eq('id', productId)
-          await insforge.db.from('stock_movements').insert({
+          await insforge.database.from('crm_products').update({ stock: newStock }).eq('id', productId)
+          await insforge.database.from('stock_movements').insert({
             product_id: productId,
             type: 'salida',
             quantity: 1,
             notes: `Venta: ${data.product_name}`,
           })
           // Check if stock below min_stock
-          const { data: prod } = await insforge.db.from('crm_products').select('min_stock').eq('id', productId).single()
+          const { data: prod } = await insforge.database.from('crm_products').select('min_stock').eq('id', productId).single()
           if (prod && newStock <= prod.min_stock) {
-            await insforge.db.from('stock_alerts').insert({
+            await insforge.database.from('stock_alerts').insert({
               company_id: companyId,
               product_id: productId,
               status: 'pending',

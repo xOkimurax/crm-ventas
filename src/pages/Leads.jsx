@@ -130,7 +130,7 @@ function CreateLeadModal({ companyId, onClose, queryClient }) {
 
   const onSubmit = async (data) => {
     try {
-      const { error } = await insforge.db.from('leads').insert({
+      const { error } = await insforge.database.from('leads').insert({
         company_id: companyId,
         name: data.name,
         phone: data.phone || null,
